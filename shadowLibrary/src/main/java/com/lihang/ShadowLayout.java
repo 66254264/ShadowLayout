@@ -121,6 +121,10 @@ public class ShadowLayout extends FrameLayout {
         if (isClickable) {
             super.setOnClickListener(onClickListener);
         }
+		
+		if (paint != null) {
+            gradient(paint);
+        }
     }
 
 
@@ -177,50 +181,60 @@ public class ShadowLayout extends FrameLayout {
     @Override
     public void setSelected(boolean selected) {
         super.setSelected(selected);
-        if (selectorType == 2) {
-            if (selected) {
-                if (mBackGroundColor_true != -101) {
-                    paint.setColor(mBackGroundColor_true);
-                }
-
-                paint.setShader(null);
-                if (stroke_color_true != -101) {
-                    paint_stroke.setColor(stroke_color_true);
-                }
-                if (layoutBackground_true != null) {
-                    setmBackGround(layoutBackground_true);
-                }
-
-                if (mTextView != null) {
-                    mTextView.setTextColor(textColor_true);
-                    if (!TextUtils.isEmpty(text_true)) {
-                        mTextView.setText(text_true);
+        if (getWidth()!=0){
+            if (selectorType == 2) {
+                if (selected) {
+                    if (mBackGroundColor_true != -101) {
+                        paint.setColor(mBackGroundColor_true);
                     }
-                }
 
-            } else {
-                paint.setColor(mBackGroundColor);
-                if (startColor != -101) {
-                    gradient(paint);
-                }
-
-                if (stroke_color != -101) {
-                    paint_stroke.setColor(stroke_color);
-                }
-
-                if (layoutBackground != null) {
-                    setmBackGround(layoutBackground);
-                }
-
-                if (mTextView != null) {
-                    mTextView.setTextColor(textColor);
-                    if (!TextUtils.isEmpty(text)) {
-                        mTextView.setText(text);
+                    paint.setShader(null);
+                    if (stroke_color_true != -101) {
+                        paint_stroke.setColor(stroke_color_true);
                     }
-                }
+                    if (layoutBackground_true != null) {
+                        setmBackGround(layoutBackground_true);
+                    }
 
+                    if (mTextView != null) {
+                        mTextView.setTextColor(textColor_true);
+                        if (!TextUtils.isEmpty(text_true)) {
+                            mTextView.setText(text_true);
+                        }
+                    }
+
+                } else {
+                    paint.setColor(mBackGroundColor);
+                    if (startColor != -101) {
+                        gradient(paint);
+                    }
+
+                    if (stroke_color != -101) {
+                        paint_stroke.setColor(stroke_color);
+                    }
+
+                    if (layoutBackground != null) {
+                        setmBackGround(layoutBackground);
+                    }
+
+                    if (mTextView != null) {
+                        mTextView.setTextColor(textColor);
+                        if (!TextUtils.isEmpty(text)) {
+                            mTextView.setText(text);
+                        }
+                    }
+
+                }
+                postInvalidate();
             }
-            postInvalidate();
+        }else {
+            addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+                @Override
+                public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
+                    removeOnLayoutChangeListener(this);
+                    setSelected(isSelected());
+                }
+            });
         }
     }
 
@@ -432,13 +446,12 @@ public class ShadowLayout extends FrameLayout {
             //selector样式不受clickable的影响
 
             if (selectorType == 2) {
-                //如果是selector的模式下//11.2优化bug
-//                if (this.isSelected()) {
-//                    //这个方法内已经判断了是否为空
-//                    setmBackGround(layoutBackground_true);
-//                } else {
-//                    setmBackGround(layoutBackground);
-//                }
+                //if (this.isSelected()) {
+                    //这个方法内已经判断了是否为空
+                  //  setmBackGround(layoutBackground_true);
+                //} else {
+                  //  setmBackGround(layoutBackground);
+              //  }
             } else {
                 if (isClickable) {
                     setmBackGround(layoutBackground);
@@ -495,6 +508,11 @@ public class ShadowLayout extends FrameLayout {
 
     //将画笔附上 渐变色
     public void gradient(Paint paint) {
+		if (!isClickable) {
+            paint.setShader(null);
+            return;
+        }
+		
         //左上 x,y   leftPadding, topPadding,
         //右下 x,y   getWidth() - rightPadding, getHeight() - bottomPadding
         int[] colors;
@@ -831,8 +849,8 @@ public class ShadowLayout extends FrameLayout {
         //优化阴影bitmap大小,将尺寸缩小至原来的1/4。
         dx = dx / 4;
         dy = dy / 4;
-        shadowWidth = shadowWidth / 4;
-        shadowHeight = shadowHeight / 4;
+        shadowWidth = shadowWidth / 4 == 0 ? 1 : shadowWidth / 4;
+        shadowHeight = shadowHeight / 4 == 0 ? 1 : shadowHeight / 4;
         cornerRadius = cornerRadius / 4;
         shadowRadius = shadowRadius / 4;
 
@@ -840,11 +858,58 @@ public class ShadowLayout extends FrameLayout {
         Canvas canvas = new Canvas(output);
 
         //这里缩小limit的是因为，setShadowLayer后会将bitmap扩散到shadowWidth，shadowHeight
+        //同时也要根据某边的隐藏情况去改变
+
+        float rect_left = 0;
+        float rect_right = 0;
+        float rect_top = 0;
+        float rect_bottom = 0;
+        if (leftShow) {
+            rect_left = shadowRadius;
+        } else {
+//            rect_left = 0;
+            float maxLeftTop = Math.max(cornerRadius, mCornerRadius_leftTop);
+            float maxLeftBottom = Math.max(cornerRadius, mCornerRadius_leftBottom);
+            float maxLeft = Math.max(maxLeftTop, maxLeftBottom);
+            rect_left = maxLeft;
+        }
+
+        if (topShow) {
+            rect_top = shadowRadius;
+        } else {
+//            rect_top = 0;
+            float maxLeftTop = Math.max(cornerRadius, mCornerRadius_leftTop);
+            float maxRightTop = Math.max(cornerRadius, mCornerRadius_rightTop);
+            float maxTop = Math.max(maxLeftTop, maxRightTop);
+            rect_top = maxTop;
+        }
+
+        if (rightShow) {
+            rect_right = shadowWidth - shadowRadius;
+        } else {
+//            rect_right = shadowWidth;
+            float maxRightTop = Math.max(cornerRadius, mCornerRadius_rightTop);
+            float maxRightBottom = Math.max(cornerRadius, mCornerRadius_rightBottom);
+            float maxRight = Math.max(maxRightTop, maxRightBottom);
+            rect_right = shadowWidth - maxRight;
+        }
+
+        if (bottomShow) {
+            rect_bottom = shadowHeight - shadowRadius;
+        } else {
+//            rect_bottom = shadowHeight;
+            float maxLeftBottom = Math.max(cornerRadius, mCornerRadius_leftBottom);
+            float maxRightBottom = Math.max(cornerRadius, mCornerRadius_rightBottom);
+            float maxBottom = Math.max(maxLeftBottom, maxRightBottom);
+            rect_bottom = shadowHeight - maxBottom;
+        }
+
+
         RectF shadowRect = new RectF(
-                shadowRadius,
-                shadowRadius,
-                shadowWidth - shadowRadius,
-                shadowHeight - shadowRadius);
+                rect_left,
+                rect_top,
+                rect_right,
+                rect_bottom);
 
         if (isSym) {
             if (dy > 0) {
@@ -943,11 +1008,11 @@ public class ShadowLayout extends FrameLayout {
                             canvas.drawRoundRect(rectf, trueHeight / 2, trueHeight / 2, paint);
                             //解决边框线太洗时，四角的width偏大和其他边不同
                             if (stroke_color != -101) {
-                                if (stroke_with>=dip2px(1)){
-                                    RectF rectFStroke = new RectF(rectf.left + stroke_with/2 , rectf.top + stroke_with/2 , rectf.right - stroke_with/2 , rectf.bottom - stroke_with/2 );
+                                if (stroke_with >= dip2px(1)) {
+                                    RectF rectFStroke = new RectF(rectf.left + stroke_with / 2, rectf.top + stroke_with / 2, rectf.right - stroke_with / 2, rectf.bottom - stroke_with / 2);
                                     canvas.drawRoundRect(rectFStroke, trueHeight / 2, trueHeight / 2, paint_stroke);
-                                }else {
-                                    RectF rectFStroke = new RectF(rectf.left + stroke_with , rectf.top + stroke_with , rectf.right - stroke_with , rectf.bottom - stroke_with );
+                                } else {
+                                    RectF rectFStroke = new RectF(rectf.left + stroke_with, rectf.top + stroke_with, rectf.right - stroke_with, rectf.bottom - stroke_with);
                                     canvas.drawRoundRect(rectFStroke, trueHeight / 2, trueHeight / 2, paint_stroke);
                                 }
 
@@ -967,11 +1032,11 @@ public class ShadowLayout extends FrameLayout {
 
                             canvas.drawRoundRect(rectf, mCornerRadius, mCornerRadius, paint);
                             if (stroke_color != -101) {
-                                if (stroke_with>=dip2px(1)){
-                                    RectF rectFStroke = new RectF(rectf.left + stroke_with/2 , rectf.top + stroke_with/2 , rectf.right - stroke_with/2 , rectf.bottom - stroke_with/2 );
+                                if (stroke_with >= dip2px(1)) {
+                                    RectF rectFStroke = new RectF(rectf.left + stroke_with / 2, rectf.top + stroke_with / 2, rectf.right - stroke_with / 2, rectf.bottom - stroke_with / 2);
                                     canvas.drawRoundRect(rectFStroke, mCornerRadius, mCornerRadius, paint_stroke);
-                                }else {
-                                    RectF rectFStroke = new RectF(rectf.left + stroke_with , rectf.top + stroke_with , rectf.right - stroke_with , rectf.bottom - stroke_with );
+                                } else {
+                                    RectF rectFStroke = new RectF(rectf.left + stroke_with, rectf.top + stroke_with, rectf.right - stroke_with, rectf.bottom - stroke_with);
                                     canvas.drawRoundRect(rectFStroke, mCornerRadius, mCornerRadius, paint_stroke);
                                 }
                             }
@@ -1067,9 +1132,9 @@ public class ShadowLayout extends FrameLayout {
                 mDrawablesStroke.getPaint().setStyle(Paint.Style.STROKE);
                 mDrawablesStroke.getPaint().setStrokeWidth(stroke_with);
 //            mDrawablesStroke.setBounds(leftPadding, topPadding, getWidth() - rightPadding, getHeight() - bottomPadding);
-                if (stroke_with>=dip2px(1)){
+                if (stroke_with >= dip2px(1)) {
                     mDrawablesStroke.setBounds((int) (leftPadding + stroke_with / 2), (int) (topPadding + stroke_with / 2), (int) (getWidth() - rightPadding - stroke_with / 2), (int) (getHeight() - bottomPadding - stroke_with / 2));
-                }else {
+                } else {
                     mDrawablesStroke.setBounds((int) (leftPadding + stroke_with), (int) (topPadding + stroke_with), (int) (getWidth() - rightPadding - stroke_with), (int) (getHeight() - bottomPadding - stroke_with));
                 }
 

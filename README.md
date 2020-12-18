@@ -17,14 +17,15 @@
     2. 背景色设置
     3. stroke边框设置
     4. 渐变色背景色值
-    6. 可绑定textView后，可伴随文案变化，可伴随文案颜色变化
     5. 按钮是否可被点击
+    6. 可绑定textView后，可伴随文案变化，可伴随文案颜色变化
+    7. 支持设置图片背景，支持图片selector
     
 ```
 <br>
 
 ## ShadowLayout动态
-* [ShadowLayout3.1.3更新内容，及以往成长](https://github.com/lihangleo2/ShadowLayout/wiki)  
+* [ShadowLayout3.1.6更新内容，及以往成长](https://github.com/lihangleo2/ShadowLayout/wiki)  
 * 注意：3.0后修改大量api及规范命名，如果还在用2.0，不方便转移的可查看[ShadowLayout2.0文档](https://github.com/lihangleo2/ShadowLayout/blob/master/README218.md)  
 <br>
 
@@ -74,10 +75,11 @@
  - app build.gradle添加如下
     ```java
    dependencies {
-	        implementation 'com.github.lihangleo2:ShadowLayout:3.1.3'
+	        implementation 'com.github.lihangleo2:ShadowLayout:3.1.6'
 	}
    ```
-   
+[glide版本冲突终极解决方案](https://github.com/lihangleo2/ShadowLayout/blob/master/GLIDE.md)     
+
 <br>
 
 ## 基本使用
